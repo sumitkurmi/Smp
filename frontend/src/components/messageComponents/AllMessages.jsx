@@ -1,10 +1,10 @@
-import React, { Fragment, useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { VscCheckAll } from "react-icons/vsc";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { CgChevronDoubleDown } from "react-icons/cg";
+import { VscCheckAll } from "react-icons/vsc";
+import { useSelector } from "react-redux";
 import {
-	SimpleDateMonthDay,
-	SimpleTime,
+    SimpleDateMonthDay,
+    SimpleTime,
 } from "../../utils/formateDateTime";
 
 const AllMessages = ({ allMessage }) => {
@@ -47,7 +47,7 @@ const AllMessages = ({ allMessage }) => {
 		<>
 			{scrollShow && (
 				<div
-					className="absolute bottom-16 right-4 z-20 cursor-pointer text-white/50 bg-black/80 hover:bg-black hover:text-white p-1.5 rounded-full"
+					className="absolute bottom-16 right-4 z-20 cursor-pointer text-richblack-200 bg-richblack-800/90 hover:bg-richblack-700 hover:text-white p-1.5 rounded-full border border-richblack-600"
 					onClick={handleScrollDownChat}
 				>
 					<CgChevronDoubleDown title="Scroll Down" fontSize={24} />
@@ -55,7 +55,7 @@ const AllMessages = ({ allMessage }) => {
 			)}
 
 			<div
-				className="flex flex-col w-full px-3 py-1 space-y-1 overflow-y-auto scroll-style h-[60vh]"
+				className="flex flex-col w-full px-3 py-1 space-y-1 overflow-y-auto scroll-style h-[60vh] bg-richblack-950"
 				ref={chatBox}
 			>
 				{allMessage?.map((message, idx) => {
@@ -69,7 +69,7 @@ const AllMessages = ({ allMessage }) => {
 						<Fragment key={message._id}>
 							{showDateHeader && (
 								<div className="sticky top-0 z-10 flex justify-center">
-									<span className="text-xs font-light mb-2 mt-1 text-white/50 bg-black h-7 w-fit px-5 rounded-md flex items-center justify-center">
+									<span className="text-xs font-light mb-2 mt-1 text-richblack-200 bg-richblack-800 h-7 w-fit px-5 rounded-md flex items-center justify-center border border-richblack-700">
 										{SimpleDateMonthDay(message?.updatedAt)}
 									</span>
 								</div>
@@ -81,11 +81,11 @@ const AllMessages = ({ allMessage }) => {
 								)}
 
 								<div className={`relative max-w-[75%] p-2 pb-6 min-w-[6rem] flex flex-col ${isMyMessage
-										? 'bg-yellow-200 text-black rounded-tl-lg rounded-bl-lg rounded-br-lg'
-										: 'bg-richblack-700 text-white rounded-tr-lg rounded-br-lg rounded-bl-lg'
+										? 'bg-yellow-400 text-black rounded-tl-lg rounded-bl-lg rounded-br-lg shadow-sm'
+										: 'bg-richblack-900 text-richblack-5 rounded-tr-lg rounded-br-lg rounded-bl-lg border border-richblack-700 shadow-sm'
 									}`}>
 									{isGroup && !isMyMessage && (
-										<span className="text-xs font-semibold text-yellow-400 mb-1">
+										<span className="text-xs font-semibold text-yellow-300 mb-1">
 											{message.sender.firstName}
 										</span>
 									)}
@@ -161,7 +161,7 @@ const AllMessages = ({ allMessage }) => {
 										</div>
 									)}
 
-									<span className="absolute bottom-1 right-2 flex items-center text-[10px] text-richblack-400 gap-1">
+									<span className={`absolute bottom-1 right-2 flex items-center text-[10px] ${isMyMessage ? 'text-black/70' : 'text-richblack-400'} gap-1`}>
 										{SimpleTime(message.updatedAt)}
 										{isMyMessage && <VscCheckAll fontSize={16} />}
 									</span>

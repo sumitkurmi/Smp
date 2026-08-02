@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import Picker from "emoji-picker-react";
+import { useEffect, useRef, useState } from "react";
 import { FaFolderOpen, FaPaperPlane, FaSmile } from "react-icons/fa";
 import { LuLoader } from "react-icons/lu";
-import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
-import Picker from "emoji-picker-react";
+import { toast } from "react-toastify";
 
 import { setSendLoading, setTyping } from "../../redux/slices/conditionSlice";
 import { addNewMessage, addNewMessageId } from "../../redux/slices/messageSlice";
@@ -170,8 +170,11 @@ const MessageSend = ({ chatId }) => {
 
 	return (
 		<form
-			className="relative w-full flex items-center gap-4 h-[7vh] px-4 bg-richblack-800 border-t border-richblack-600 text-white mt-6"
-			onSubmit={(e) => e.preventDefault()}
+			className="relative w-full flex items-center gap-4 h-[7vh] px-4 bg-richblack-900 border-t border-richblack-700 text-white mt-6 shadow-inner"
+			onSubmit={(e) => {
+				e.preventDefault();
+				if (newMessage.trim()) handleSendMessage();
+			}}
 		>
 			{/* File Upload */}
 			<input
@@ -185,7 +188,7 @@ const MessageSend = ({ chatId }) => {
 			<button
 				type="button"
 				onClick={() => mediaFile.current.click()}
-				className="p-2 rounded-md hover:bg-richblack-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+				className="p-2 rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
 				title="Upload File"
 				disabled={isSendLoading}
 			>
@@ -195,7 +198,7 @@ const MessageSend = ({ chatId }) => {
 			<button
 				type="button"
 				onClick={() => setShowEmojiPicker((v) => !v)}
-				className="p-2 rounded-md hover:bg-richblack-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+				className="p-2 rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
 				title="Emoji"
 				disabled={isSendLoading}
 			>
@@ -216,7 +219,7 @@ const MessageSend = ({ chatId }) => {
 			{/* Message Input */}
 			<input
 				type="text"
-				className="flex-1 bg-richblack-700 px-4 py-2 rounded-full placeholder:text-richblack-400 text-richblack-5 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+				className="flex-1 bg-richblack-800 px-4 py-2 rounded-full placeholder:text-richblack-400 text-richblack-5 focus:outline-none focus:ring-2 focus:ring-yellow-400 border border-richblack-700"
 				placeholder="Type a message..."
 				value={newMessage}
 				onChange={handleTyping}

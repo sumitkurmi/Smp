@@ -6,9 +6,20 @@ const mongoose = require("mongoose");
 
 const app = express();
 
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173,http://127.0.0.1:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
 // Enhanced CORS configuration
 const corsOptions = {
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error("Not allowed by CORS"));
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
@@ -32,7 +43,7 @@ async function connectDB() {
         console.log("Database connection established");
     } catch (err) {
         console.error("Database connection error:", err.message);
-        process.exit(1);
+        console.warn("Continuing without a database connection; auth and chat routes will fail until MongoDB is reachable.");
     }
 }
 
@@ -73,50 +84,8 @@ async function startServer() {
     });
 
     // Socket.IO Configuration
-    const { Server } = require("socket.io");
-    const io = new Server(server, {
-        pingTimeout: 60000,
-        transports: ["websocket"],
-        cors: corsOptions
-    });
-
-    // Socket.IO Event Handlers
-    io.on("connection", (socket) => {
-        console.log("New socket connection:", socket.id);
-
-        // Setup and Chat Events
-        socket.on("setup", (userId) => {
-            socket.join(userId);
-            console.log(`User ${userId} connected`);
-            socket.emit("connected");
-        });
-
-        socket.on("join chat", (roomId) => {
-            socket.join(roomId);
-            console.log(`User joined chat room: ${roomId}`);
-        });
-
-        // Message Handling
-        socket.on("new message", (newMessage) => {
-            const chat = newMessage.chat;
-            if (!chat?.users) return;
-
-            chat.users.forEach(user => {
-                if (user._id === newMessage.sender._id) return;
-                socket.in(user._id).emit("message received", newMessage);
-            });
-        });
-
-        // Typing Indicators
-        socket.on("typing", (roomId) => socket.in(roomId).emit("typing"));
-        socket.on("stop typing", (roomId) => socket.in(roomId).emit("stop typing"));
-
-        // Cleanup
-        socket.on("disconnect", () => {
-            console.log("User disconnected:", socket.id);
-            socket.removeAllListeners();
-        });
-    });
+    const { initSocket } = require("./socket");
+    initSocket(server, corsOptions);
 }
 
 startServer().catch(err => {

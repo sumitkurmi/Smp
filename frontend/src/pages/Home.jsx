@@ -1,23 +1,22 @@
-import React, { useEffect } from "react";
-import { MdChat } from "react-icons/md";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import UserSearch from "../components/chatComponents/UserSearch";
-import MyChat from "../components/chatComponents/MyChat";
-import MessageBox from "../components/messageComponents/MessageBox";
+import { toast } from "react-toastify";
 import ChatNotSelected from "../components/chatComponents/ChatNotSelected";
+import MyChat from "../components/chatComponents/MyChat";
+import UserSearch from "../components/chatComponents/UserSearch";
+import MessageBox from "../components/messageComponents/MessageBox";
 import {
-  setChatDetailsBox,
-  setSocketConnected,
-  setUserSearchBox,
+    setChatDetailsBox,
+    setSocketConnected
 } from "../redux/slices/conditionSlice";
-import socket from "../socket/socket";
 import { addAllMessages, addNewMessage } from "../redux/slices/messageSlice";
 import {
-  addNewChat,
-  addNewMessageRecieved,
-  deleteSelectedChat,
+    addMyChat,
+    addNewChat,
+    addNewMessageRecieved,
+    deleteSelectedChat,
 } from "../redux/slices/myChatSlice";
-import { toast } from "react-toastify";
+import socket from "../socket/socket";
 import { receivedSound } from "../utils/notificationSound";
 
 let selectedChatCompare;
@@ -40,7 +39,8 @@ const Home = () => {
   // SOCKET MESSAGE RECEIVED
   useEffect(() => {
     selectedChatCompare = selectedChat;
-    const messageHandler = (newMessageReceived) => {
+    const messageHandler = async (newMessageReceived) => {
+      const token = localStorage.getItem("token");
       if (
         selectedChatCompare &&
         selectedChatCompare._id === newMessageReceived.chat._id
@@ -50,10 +50,18 @@ const Home = () => {
         receivedSound();
         dispatch(addNewMessageRecieved(newMessageReceived));
       }
+
+      if (token) {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/chat`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (json?.data) dispatch(addMyChat(json.data));
+      }
     };
     socket.on("message received", messageHandler);
     return () => socket.off("message received", messageHandler);
-  });
+  }, [selectedChat, dispatch]);
 
   // SOCKET CLEAR CHAT
   useEffect(() => {
@@ -90,6 +98,32 @@ const Home = () => {
     socket.on("chat created", chatCreatedHandler);
     return () => socket.off("chat created", chatCreatedHandler);
   });
+
+  // SOCKET ATTENDANCE UPDATE
+  useEffect(() => {
+    const attendanceUpdatedHandler = (notification) => {
+      const { chatId, meetingTitle, studentName, status, updatedBy } = notification;
+      const statusText = status === "present" ? "present" : "absent";
+      toast.info(
+        `${studentName} was marked ${statusText} for ${meetingTitle} by ${updatedBy}`
+      );
+
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/chat`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((json) => {
+            if (json?.data) dispatch(addMyChat(json.data));
+          })
+          .catch(() => {});
+      }
+    };
+
+    socket.on("attendance updated", attendanceUpdatedHandler);
+    return () => socket.off("attendance updated", attendanceUpdatedHandler);
+  }, [dispatch]);
 
   return (
     <div className="w-full h-[calc(100vh-4rem)] bg-richblack-900 px-2 md:px-6 py-4">

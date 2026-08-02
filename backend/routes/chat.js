@@ -20,5 +20,9 @@ router.post(
 	wrapAsync(chatController.removeFromGroup)
 );
 router.post("/groupadd", authorization, wrapAsync(chatController.addToGroup));
+router.post("/add-mentor", authorization, wrapAsync(chatController.addMentor));
+router.post("/meeting", authorization, wrapAsync(chatController.scheduleMeeting));
+router.get("/meetings/:chatId", authorization, wrapAsync(chatController.getMeetings));
+router.post("/attendance", authorization, wrapAsync(chatController.updateAttendance));
 
 module.exports = router;

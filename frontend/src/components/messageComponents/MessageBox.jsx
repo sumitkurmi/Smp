@@ -1,23 +1,23 @@
-import React, { useEffect, useRef, useState } from "react";
-import { FaArrowLeft } from "react-icons/fa";
+import { useEffect, useRef, useState } from "react";
 import { CiMenuKebab } from "react-icons/ci";
+import { FaArrowLeft } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
 import {
-	setChatDetailsBox,
-	setMessageLoading,
+    setChatDetailsBox,
+    setMessageLoading,
 } from "../../redux/slices/conditionSlice";
 import { addAllMessages } from "../../redux/slices/messageSlice";
 import { addSelectedChat } from "../../redux/slices/myChatSlice";
 
+import ChatDetailsBox from "../chatDetails/ChatDetailsBox";
+import MessageLoading from "../loading/MessageLoading";
 import AllMessages from "./AllMessages";
 import MessageSend from "./MessageSend";
-import MessageLoading from "../loading/MessageLoading";
-import ChatDetailsBox from "../chatDetails/ChatDetailsBox";
 
-import getChatName, { getChatImage } from "../../utils/getChatName";
 import socket from "../../socket/socket";
+import getChatName, { getChatImage } from "../../utils/getChatName";
 
 const MessageBox = ({ chatId }) => {
 	const dispatch = useDispatch();
@@ -83,7 +83,7 @@ const MessageBox = ({ chatId }) => {
 		<>
 			{/* Header */}
 			<div
-				className="py-6 sm:px-6 px-3 w-full h-[7vh] font-semibold flex justify-between items-center bg-slate-800 text-white cursor-pointer"
+				className="py-6 sm:px-6 px-3 w-full h-[7vh] font-semibold flex justify-between items-center bg-richblack-900 text-richblack-5 border-b border-richblack-700 cursor-pointer"
 				onClick={() => dispatch(setChatDetailsBox(true))}
 			>
 				<div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ const MessageBox = ({ chatId }) => {
 							e.stopPropagation();
 							dispatch(addSelectedChat(null));
 						}}
-						className="sm:hidden bg-black/15 hover:bg-black/50 h-8 w-8 rounded-md flex items-center justify-center"
+						className="sm:hidden bg-richblack-800 hover:bg-richblack-700 h-8 w-8 rounded-md flex items-center justify-center"
 					>
 						<FaArrowLeft title="Back" fontSize={14} />
 					</div>

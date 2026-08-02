@@ -1,28 +1,27 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Provider, useSelector } from "react-redux";
 import {
   createBrowserRouter,
   Outlet,
   RouterProvider,
 } from "react-router-dom";
-import { Provider, useSelector } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Components
 import Header from "./components/Header";
+import NotificationBox from "./components/NotificationBox";
 import Sidebar from "./components/Sidebar";
 import GroupChatBox from "./components/chatComponents/GroupChatBox";
-import NotificationBox from "./components/NotificationBox";
 import Loading from "./components/loading/Loading";
 
 // Pages
-import Home from "./pages/Home";
-import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn";
 import Error from "./pages/Error";
+import Home from "./pages/Home";
 import MyProfile from "./pages/MyProfile";
-
+import SignIn from "./pages/SignIn";
 // Redux Store
+import Signup from "./pages/Signup";
 import store from "./redux/store";
 
 // Layout Component
@@ -92,7 +91,7 @@ const routers = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "profile", element: <MyProfile /> },
-      { path: "signup", element: <SignUp /> },
+      { path: "signup", element: <Signup /> },
       { path: "signin", element: <SignIn /> },
       { path: "*", element: <Error /> },
     ],

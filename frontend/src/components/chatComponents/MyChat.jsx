@@ -1,23 +1,23 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
+import { FaSearch } from "react-icons/fa";
 import { MdGroupAdd } from "react-icons/md";
 import { VscCheckAll } from "react-icons/vsc";
-import { FaSearch } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import {
-	addMyChat,
-	addSelectedChat,
+    setChatLoading,
+    setGroupChatBox,
+    setUserSearchBox,
+} from "../../redux/slices/conditionSlice";
+import {
+    addMyChat,
+    addSelectedChat,
 } from "../../redux/slices/myChatSlice";
 import {
-	setChatLoading,
-	setGroupChatBox,
-	setUserSearchBox,
-} from "../../redux/slices/conditionSlice";
-import ChatShimmer from "../loading/ChatShimmer";
-import getChatName, { getChatImage } from "../../utils/getChatName";
-import {
-	SimpleDateAndTime,
-	SimpleTime,
+    SimpleDateAndTime,
+    SimpleTime,
 } from "../../utils/formateDateTime";
+import getChatName, { getChatImage } from "../../utils/getChatName";
+import ChatShimmer from "../loading/ChatShimmer";
 
 const MyChat = () => {
 	const dispatch = useDispatch();
@@ -100,7 +100,7 @@ const MyChat = () => {
 							className={`w-full flex items-center gap-3 p-4 rounded-lg transition-all border
 								${
 									selectedChat?._id === chat?._id
-										? "border-yellow-400 bg-yellow-50 text-black shadow-inner"
+										? "border-yellow-400 bg-richblack-900 text-white shadow-inner"
 										: "border-richblack-600 bg-richblack-700 text-white hover:bg-richblack-600 shadow hover:shadow-lg"
 								}
 							`}

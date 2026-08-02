@@ -1,23 +1,25 @@
 // Header.jsx
-import React, { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { IoLogOutOutline } from "react-icons/io5";
+import { MdNotificationsActive } from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../assets/logo2.jpeg";
-import { useDispatch, useSelector } from "react-redux";
 import { addAuth } from "../redux/slices/authSlice";
-import handleScrollTop from "../utils/handleScrollTop";
-import { MdNotificationsActive } from "react-icons/md";
 import { setLoading, setNotificationBox } from "../redux/slices/conditionSlice";
-import { IoLogOutOutline } from "react-icons/io5";
+import handleScrollTop from "../utils/handleScrollTop";
 
 const Header = () => {
   const location = useLocation();
   const user = useSelector((store) => store.auth);
+  const rawToken = localStorage.getItem("token");
+  const token = rawToken && rawToken !== "null" && rawToken !== "undefined" ? rawToken : null;
+  const isLoggedIn = Boolean(token || user?._id);
   const newMessageRecieved = useSelector(
     (store) => store?.myChat?.newMessageRecieved
   );
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   // Generate avatar URL from user initials (only if user data is available)
   const avatarUrl = user?.firstName && user?.lastName
@@ -94,7 +96,7 @@ const Header = () => {
         </Link>
       </div>
 
-      {user && (
+      {isLoggedIn ? (
         <div className="flex items-center gap-4">
           <button
             onClick={() => dispatch(setNotificationBox(true))}
@@ -107,14 +109,16 @@ const Header = () => {
             </span>
           </button>
           {/* Profile avatar */}
-          {avatarUrl && (
-            <img
-              src={avatarUrl}
-              alt="avatar"
-              className="hidden md:block w-8 h-8 rounded-full object-cover border-2 border-yellow-400"
-            />
-          )}
-          <span className="hidden md:block">Hi, {user?.firstName}</span>
+          <Link to="/profile" className="flex items-center gap-2">
+            {avatarUrl && (
+              <img
+                src={avatarUrl}
+                alt="avatar"
+                className="hidden md:block w-8 h-8 rounded-full object-cover border-2 border-yellow-400"
+              />
+            )}
+            <span className="hidden md:block">Hi, {user?.firstName}</span>
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-1 py-2 px-5 rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
@@ -122,6 +126,11 @@ const Header = () => {
             <IoLogOutOutline fontSize={20} />
             Logout
           </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <Link to="/signin" className="rounded-full px-4 py-2 text-sm font-semibold text-white hover:text-yellow-400">Sign In</Link>
+          <Link to="/signup" className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-semibold text-black">Sign Up</Link>
         </div>
       )}
     </div>

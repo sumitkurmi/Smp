@@ -5,9 +5,16 @@ const wrapAsync = require("./wrapAsync");
 const authorization = wrapAsync(async (req, res, next) => {
 	const token = req.headers.authorization?.split(" ")[1];
 	if (!token) {
-		return res.status(404).send({ message: "Token not found" });
+		return res.status(401).json({ message: "Token not found" });
 	}
-	const userId = getUserIdFromToken(token);
+
+	let userId;
+	try {
+		userId = getUserIdFromToken(token);
+	} catch (err) {
+		return res.status(401).json({ message: "Invalid token" });
+	}
+
 	if (userId) {
 		req.user = await User.findById(userId).select("-password");
 	}

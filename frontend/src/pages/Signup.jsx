@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { FaEnvelope, FaIdBadge, FaLock, FaUser } from "react-icons/fa";
+import { PiEye, PiEyeClosedLight } from "react-icons/pi";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { checkValidSignUpFrom } from "../utils/validate";
-import { PiEye, PiEyeClosedLight } from "react-icons/pi";
-import { FaUser, FaEnvelope, FaIdBadge, FaLock } from "react-icons/fa";
 
 const SignUp = () => {
   const [firstName, setFirstName] = useState("");
@@ -19,28 +19,35 @@ const SignUp = () => {
   const signUpUser = (e) => {
     toast.loading("Wait until you SignUp");
     e.target.disabled = true;
+
     fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ firstName, lastName, email, password, regNo, accountType }),
     })
-      .then((res) => res.json())
-      .then((json) => {
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
         toast.dismiss();
         setLoad("");
         e.target.disabled = false;
 
+        if (!res.ok) {
+          throw new Error(json?.message || "Signup failed");
+        }
+
         if (json.token) {
-          toast.success(json?.message);
+          toast.success(json?.message || "Signup successful");
           navigate("/signin");
-        } else toast.error(json?.message);
+        } else {
+          throw new Error(json?.message || "Signup failed");
+        }
       })
       .catch((err) => {
         console.error("Error:", err);
         toast.dismiss();
         setLoad("");
-        toast.error("Error: " + err.code);
         e.target.disabled = false;
+        toast.error(err.message || "Unable to connect to the server. Check that the backend is running.");
       });
   };
 
@@ -105,7 +112,7 @@ const SignUp = () => {
             <input
               type="email"
               id="email"
-              placeholder="john.doe@example.com"
+              placeholder="john.regno@mnnit.ac.in"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10 px-4 py-3 rounded-xl bg-richblack-700 border border-richblack-600 text-white placeholder:text-richblack-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition"
@@ -121,7 +128,7 @@ const SignUp = () => {
             <input
               type="text"
               id="regNo"
-              placeholder="22IT123"
+              placeholder="2023000"
               value={regNo}
               onChange={(e) => setRegNo(e.target.value)}
               className="pl-10 px-4 py-3 rounded-xl bg-richblack-700 border border-richblack-600 text-white placeholder:text-richblack-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition"

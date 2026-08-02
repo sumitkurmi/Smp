@@ -1,5 +1,7 @@
 const Chat = require("../models/chat");
 const Message = require("../models/message");
+const Attendance = require("../models/attendance");
+const { getIO } = require("../socket");
 
 const postChat = async (req, res) => {
 	const { userId } = req.body;
@@ -148,6 +150,112 @@ const addToGroup = async (req, res) => {
 	}
 };
 
+const addMentor = async (req, res) => {
+	const { chatId, userId } = req.body;
+	if (!chatId || !userId) {
+		return res.status(400).json({ message: "chatId and userId are required" });
+	}
+	const chat = await Chat.findById(chatId);
+	if (!chat) {
+		return res.status(404).json({ message: "Group not found" });
+	}
+	const isCurrentMentor = chat.groupAdmin?.toString() === req.user._id.toString() || (Array.isArray(chat.mentors) && chat.mentors.some((mentorId) => mentorId.toString() === req.user._id.toString())) || req.user.accountType === 'admin';
+	if (!isCurrentMentor) {
+		return res.status(403).json({ message: "Only the current mentor can add mentors" });
+	}
+	if (!chat.users.some((memberId) => memberId.toString() === userId)) {
+		return res.status(400).json({ message: "Selected user is not a member of this group" });
+	}
+	const alreadyMentor = chat.groupAdmin?.toString() === userId || (Array.isArray(chat.mentors) && chat.mentors.some((memberId) => memberId.toString() === userId));
+	if (alreadyMentor) {
+		return res.status(400).json({ message: "This user is already a mentor" });
+	}
+	const updatedChat = await Chat.findByIdAndUpdate(
+		chatId,
+		{ $addToSet: { mentors: userId } },
+		{ new: true }
+	)
+		.populate("users", "-password")
+		.populate("groupAdmin", "-password");
+	return res.status(200).json({ data: updatedChat });
+};
+
+const scheduleMeeting = async (req, res) => {
+	const { chatId, title, scheduledAt } = req.body;
+	if (!chatId || !title || !scheduledAt) {
+		return res.status(400).json({ message: "chatId, title and scheduledAt are required" });
+	}
+	const chat = await Chat.findById(chatId);
+	if (!chat) {
+		return res.status(404).json({ message: "Group not found" });
+	}
+	const isMentor = req.user.accountType === 'mentor' || chat.groupAdmin?.toString() === req.user._id.toString() || req.user.accountType === 'admin';
+	if (!isMentor) {
+		return res.status(403).json({ message: "Only the group mentor can schedule meetings" });
+	}
+	const existingChat = await Chat.findById(chatId).populate('users', '-password');
+	const attendance = await Attendance.create({
+		chat: chatId,
+		meetingTitle: title,
+		scheduledAt,
+		createdBy: req.user._id,
+		records: existingChat.users.map((user) => ({ student: user._id, status: 'pending' })),
+	});
+	return res.status(200).json({ data: attendance });
+};
+
+const getMeetings = async (req, res) => {
+	const { chatId } = req.params;
+	const meetings = await Attendance.find({ chat: chatId })
+		.populate('records.student', '-password')
+		.populate('createdBy', '-password')
+		.sort({ scheduledAt: 1 });
+	return res.status(200).json({ data: meetings });
+};
+
+const updateAttendance = async (req, res) => {
+	const { meetingId, studentId, status } = req.body;
+	if (!meetingId || !studentId || !status) {
+		return res.status(400).json({ message: "meetingId, studentId and status are required" });
+	}
+	const meeting = await Attendance.findById(meetingId);
+	if (!meeting) {
+		return res.status(404).json({ message: "Meeting not found" });
+	}
+	const chat = await Chat.findById(meeting.chat);
+	if (chat.groupAdmin?.toString() !== req.user._id.toString() && req.user.accountType !== 'admin') {
+		return res.status(403).json({ message: "Only the group mentor can mark attendance" });
+	}
+	meeting.records = meeting.records.map((record) => {
+		if (record.student.toString() === studentId) {
+			return { ...record.toObject(), status, markedAt: new Date() };
+		}
+		return record;
+	});
+	await meeting.save();
+
+	await meeting.populate("records.student", "-password");
+	const updatedRecord = meeting.records.find((record) => record.student._id.toString() === studentId.toString());
+	const studentName = updatedRecord?.student?.name || `${updatedRecord?.student?.firstName || ""} ${updatedRecord?.student?.lastName || ""}`.trim() || updatedRecord?.student?.email || "Student";
+	const io = getIO();
+	const notificationPayload = {
+		meetingId: meeting._id,
+		chatId: chat._id,
+		meetingTitle: meeting.meetingTitle,
+		studentId,
+		status,
+		studentName,
+		scheduledAt: meeting.scheduledAt,
+		updatedBy: req.user.name || req.user.email || "Mentor",
+	};
+	const userIds = Array.from(new Set(chat.users.map((user) => user.toString())));
+	userIds.forEach((userId) => {
+		io.to(userId).emit("attendance updated", notificationPayload);
+	});
+
+	return res.status(200).json({ data: meeting });
+};
+
 module.exports = {
 	postChat,
 	getChat,
@@ -156,4 +264,8 @@ module.exports = {
 	renameGroup,
 	removeFromGroup,
 	addToGroup,
+	addMentor,
+	scheduleMeeting,
+	getMeetings,
+	updateAttendance,
 };
