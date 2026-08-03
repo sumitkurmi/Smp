@@ -56,7 +56,8 @@ const getChat = async (req, res) => {
 				select: "-password",
 			},
 		})
-		.populate("groupAdmin", "-password");
+.populate("groupAdmin", "-password")
+		.populate('meetings');
 	return res.status(200).json({ data: chat });
 };
 const createGroup = async (req, res) => {
@@ -201,6 +202,26 @@ const scheduleMeeting = async (req, res) => {
 		createdBy: req.user._id,
 		records: existingChat.users.map((user) => ({ student: user._id, status: 'pending' })),
 	});
+
+	// Add meeting to chat's meetings array
+	await Chat.findByIdAndUpdate(chatId, { $addToSet: { meetings: attendance._id } });
+
+	// Emit socket notification to all group members
+	const io = getIO();
+	const notificationPayload = {
+		meetingId: attendance._id,
+		chatId,
+		chatName: chat.chatName,
+		meetingTitle: title,
+		scheduledAt,
+		createdBy: req.user._id,
+		mentorName: req.user.firstName ? `${req.user.firstName} ${req.user.lastName || ""}`.trim() : req.user.email,
+	};
+	const userIds = Array.from(new Set(chat.users.map((user) => user.toString())));
+	userIds.forEach((userId) => {
+		io.to(userId).emit("meeting scheduled", notificationPayload);
+	});
+
 	return res.status(200).json({ data: attendance });
 };
 

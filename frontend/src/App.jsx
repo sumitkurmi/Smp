@@ -44,7 +44,12 @@ const AppLayout = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-tr from-black via-blue-900 to-black text-white min-h-screen flex flex-col">
+    <div className="relative min-h-screen flex flex-col text-white overflow-hidden bg-richblack-900">
+      {/* Ambient background blobs */}
+      <div className="ambient-blob w-96 h-96 bg-yellow-500 -top-24 -left-24" />
+      <div className="ambient-blob w-[28rem] h-[28rem] bg-blue-600 top-1/3 -right-32" />
+      <div className="ambient-blob w-80 h-80 bg-purple-600 bottom-0 left-1/3" />
+
       {/* Toast Notifications */}
       <ToastContainer
         position={toastPosition}
@@ -56,8 +61,11 @@ const AppLayout = () => {
         theme="dark"
         limit={3}
         toastStyle={{
-          border: "1px solid #dadadaaa",
+          border: "1px solid #F7C94855",
           textTransform: "capitalize",
+          background: "rgba(22,29,41,0.95)",
+          backdropFilter: "blur(12px)",
+          borderRadius: "12px",
         }}
       />
 
@@ -66,7 +74,7 @@ const AppLayout = () => {
       <div className="h-16 md:h-20" />
 
       {/* Main Content */}
-      <main className="flex-1 min-h-[85vh] p-2 sm:p-4">
+      <main className="relative z-10 flex-1 min-h-[85vh] p-2 sm:p-4">
         <Outlet />
         {/* Overlays */}
         {isGroupChatBox && <GroupChatBox />}
@@ -108,3 +116,4 @@ function App() {
 }
 
 export default App;
+

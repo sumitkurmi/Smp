@@ -16,9 +16,15 @@ const messageSlice = createSlice({
         addNewMessageId: (state, action) => {
             state.newMessageId = action.payload;
         },
+        updateReaction: (state, action) => {
+            const updated = action.payload;
+            state.message = state.message.map((msg) =>
+                msg._id === updated._id ? updated : msg
+            );
+        },
     },
 });
 
-export const { addAllMessages, addNewMessage, addNewMessageId } =
+export const { addAllMessages, addNewMessage, addNewMessageId, updateReaction } =
     messageSlice.actions;
 export default messageSlice.reducer;

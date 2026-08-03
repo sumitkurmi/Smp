@@ -9,6 +9,40 @@ const getAuthUser = async (req, res) => {
 	});
 };
 
+// Update authenticated user's profile (name / image)
+const updateProfile = async (req, res) => {
+	const { firstName, lastName, image } = req.body;
+
+	if (!firstName || !lastName) {
+		return res.status(400).json({ message: "First name and last name are required" });
+	}
+
+	const updateData = { firstName, lastName };
+	if (image && typeof image === "string") {
+		updateData.image = image;
+	}
+
+	try {
+		const updatedUser = await User.findByIdAndUpdate(
+			req.user._id,
+			updateData,
+			{ new: true }
+		).select("-password");
+
+		if (!updatedUser) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		return res.status(200).json({
+			message: "Profile updated successfully",
+			data: updatedUser,
+		});
+	} catch (error) {
+		console.error("Error updating profile:", error);
+		return res.status(500).json({ message: "Failed to update profile" });
+	}
+};
+
 const getAllUsers = async (req, res) => {
 	const allUsers = await User.find({ _id: { $ne: req.user._id } })
 		.select("-password")

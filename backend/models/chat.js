@@ -24,10 +24,16 @@ const chatSchema = mongoose.Schema(
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "User",
 		},
-		mentors: [
+mentors: [
 			{
 				type: mongoose.Schema.Types.ObjectId,
 				ref: "User",
+			},
+		],
+		meetings: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "Attendance",
 			},
 		],
 	},

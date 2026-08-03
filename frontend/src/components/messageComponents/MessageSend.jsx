@@ -1,6 +1,6 @@
 import Picker from "emoji-picker-react";
 import { useEffect, useRef, useState } from "react";
-import { FaFolderOpen, FaPaperPlane, FaSmile } from "react-icons/fa";
+import { FaFolderOpen, FaPaperPlane, FaSmile, FaTimes } from "react-icons/fa";
 import { LuLoader } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -11,7 +11,7 @@ import socket from "../../socket/socket";
 
 let lastTypingTime;
 
-const MessageSend = ({ chatId }) => {
+const MessageSend = ({ chatId, replyTo, setReplyTo }) => {
 	const mediaFile = useRef();
 	const [newMessage, setMessage] = useState("");
 	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -90,6 +90,7 @@ const MessageSend = ({ chatId }) => {
 				mediaType === "file"
 					? [{ url: mediaUrl, name: fileName }]
 					: [],
+			replyTo: replyTo?._id || null,
 		};
 
 		dispatch(setSendLoading(true));
@@ -106,6 +107,7 @@ const MessageSend = ({ chatId }) => {
 			dispatch(addNewMessageId(result?.data?._id));
 			dispatch(addNewMessage(result?.data));
 			socket.emit("new message", result?.data);
+			if (setReplyTo) setReplyTo(null);
 		} catch (err) {
 			console.error("Failed to send media message:", err);
 			toast.error("Failed to send media message");
@@ -131,13 +133,18 @@ const MessageSend = ({ chatId }) => {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${token}`,
 				},
-				body: JSON.stringify({ message, chatId }),
+				body: JSON.stringify({
+					message,
+					chatId,
+					replyTo: replyTo?._id || null,
+				}),
 			});
 			const result = await response.json();
 
 			dispatch(addNewMessageId(result?.data?._id));
 			dispatch(addNewMessage(result?.data));
 			socket.emit("new message", result?.data);
+			if (setReplyTo) setReplyTo(null);
 		} catch (err) {
 			console.error("Text message error:", err);
 			toast.error("Message sending failed");
@@ -169,81 +176,109 @@ const MessageSend = ({ chatId }) => {
 	};
 
 	return (
-		<form
-			className="relative w-full flex items-center gap-4 h-[7vh] px-4 bg-richblack-900 border-t border-richblack-700 text-white mt-6 shadow-inner"
-			onSubmit={(e) => {
-				e.preventDefault();
-				if (newMessage.trim()) handleSendMessage();
-			}}
-		>
-			{/* File Upload */}
-			<input
-				type="file"
-				ref={mediaFile}
-				multiple
-				style={{ display: "none" }}
-				onChange={handleMediaUpload}
-			/>
-
-			<button
-				type="button"
-				onClick={() => mediaFile.current.click()}
-				className="p-2 rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
-				title="Upload File"
-				disabled={isSendLoading}
-			>
-				<FaFolderOpen size={20} />
-			</button>
-
-			<button
-				type="button"
-				onClick={() => setShowEmojiPicker((v) => !v)}
-				className="p-2 rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
-				title="Emoji"
-				disabled={isSendLoading}
-			>
-				<FaSmile size={20} />
-			</button>
-
-			{showEmojiPicker && (
-				<div className="absolute bottom-full mb-2 left-0 z-50">
-					<Picker
-						onEmojiClick={(emojiData) => {
-							setMessage((m) => m + emojiData.emoji);
-							setShowEmojiPicker(false);
-						}}
-					/>
+		<>
+			{/* Reply bar */}
+			{replyTo && (
+				<div className="px-4 py-2 bg-richblack-800/90 border-t border-white/10 flex items-center gap-3">
+					<div className="flex-1 min-w-0 text-sm border-l-2 border-yellow-400 pl-3">
+						<span className="text-yellow-300 font-semibold">
+							Replying to {replyTo?.sender?.firstName || "message"}
+						</span>
+						<p className="truncate text-richblack-200">
+							{replyTo?.replyPreview ||
+								replyTo?.message ||
+								(replyTo?.image_urls?.length ? "📷 Image" : "") ||
+								(replyTo?.video_urls?.length ? "🎬 Video" : "") ||
+								(replyTo?.files?.length ? "📎 File" : "Message")}
+						</p>
+					</div>
+					<button
+						onClick={() => setReplyTo && setReplyTo(null)}
+						className="p-1.5 rounded-full text-richblack-300 hover:bg-white/10 hover:text-white transition"
+						title="Cancel Reply"
+					>
+						<FaTimes size={16} />
+					</button>
 				</div>
 			)}
 
-			{/* Message Input */}
-			<input
-				type="text"
-				className="flex-1 bg-richblack-800 px-4 py-2 rounded-full placeholder:text-richblack-400 text-richblack-5 focus:outline-none focus:ring-2 focus:ring-yellow-400 border border-richblack-700"
-				placeholder="Type a message..."
-				value={newMessage}
-				onChange={handleTyping}
-				disabled={isSendLoading}
-			/>
+<form
+				className="shrink-0 relative w-full flex items-center gap-3 h-[7vh] px-4 bg-richblack-900/90 backdrop-blur-sm border-t border-white/10 text-white shadow-inner"
+				onSubmit={(e) => {
+					e.preventDefault();
+					if (newMessage.trim()) handleSendMessage();
+				}}
+			>
+				{/* File Upload */}
+				<input
+					type="file"
+					ref={mediaFile}
+					multiple
+					style={{ display: "none" }}
+					onChange={handleMediaUpload}
+				/>
 
-			{/* Send Button or Loader */}
-			{!isSendLoading && newMessage.trim() && (
 				<button
 					type="button"
-					onClick={handleSendMessage}
-					className="p-2 rounded-full bg-yellow-400 text-black hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-					title="Send Message"
+					onClick={() => mediaFile.current.click()}
+					className="p-2 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition text-richblack-200 hover:text-white"
+					title="Upload File"
+					disabled={isSendLoading}
 				>
-					<FaPaperPlane size={18} />
+					<FaFolderOpen size={20} />
 				</button>
-			)}
-			{isSendLoading && (
-				<div className="p-2">
-					<LuLoader className="animate-spin text-yellow-400" size={18} />
-				</div>
-			)}
-		</form>
+
+				<button
+					type="button"
+					onClick={() => setShowEmojiPicker((v) => !v)}
+					className="p-2 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition text-richblack-200 hover:text-white"
+					title="Emoji"
+					disabled={isSendLoading}
+				>
+					<FaSmile size={20} />
+				</button>
+
+				{showEmojiPicker && (
+					<div className="absolute bottom-full mb-2 left-0 z-50">
+						<Picker
+							onEmojiClick={(emojiData) => {
+								setMessage((m) => m + emojiData.emoji);
+								setShowEmojiPicker(false);
+							}}
+						/>
+					</div>
+				)}
+
+				{/* Message Input */}
+				<input
+					type="text"
+					className="flex-1 bg-richblack-800/80 px-4 py-2.5 rounded-full placeholder:text-richblack-400 text-richblack-5 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 border border-white/10"
+					placeholder={replyTo ? "Reply..." : "Type a message..."}
+					value={newMessage}
+					onChange={handleTyping}
+					disabled={isSendLoading}
+				/>
+
+				{/* Send Button or Loader */}
+				{!isSendLoading && newMessage.trim() && (
+					<button
+						type="button"
+						onClick={handleSendMessage}
+						className="p-2.5 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-300 text-black hover:from-yellow-300 hover:to-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition shadow-lg shadow-yellow-500/20"
+						title="Send Message"
+					>
+						<FaPaperPlane size={18} />
+					</button>
+				)}
+				{isSendLoading && (
+					<div className="p-2">
+						<LuLoader className="animate-spin text-yellow-400" size={18} />
+					</div>
+				)}
+			</form>
+		</>
 	);
 };
 
 export default MessageSend;
+

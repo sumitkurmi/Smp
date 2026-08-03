@@ -24,18 +24,19 @@ const Sidebar = () => {
     <>
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-[10000] p-2 bg-white text-black rounded shadow"
+        className="fixed top-4 left-4 z-[10000] p-2.5 rounded-lg glass-light text-white hover:bg-white/10 shadow-lg transition"
+        title="Toggle Menu"
       >
-        {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+        {isOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
       </button>
 
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-richblack-800 text-richblack-100 pt-16 px-6 pb-6 flex flex-col transform transition-transform z-[9999] ${
-          isOpen ? "translate-x-0 border-r border-yellow-600" : "-translate-x-full"
+        className={`fixed top-0 left-0 h-full w-64 glass pt-16 px-6 pb-6 flex flex-col transform transition-transform z-[9999] ${
+          isOpen ? "translate-x-0 border-r border-yellow-600/40" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col gap-3">
-          <h1 className="text-xl font-bold flex items-center gap-2 text-yellow-400">
+          <h1 className="text-xl font-extrabold tracking-wide text-gradient-gold flex items-center gap-2">
             SMP HUB
           </h1>
           <p className="text-sm text-richblack-300">
@@ -44,18 +45,18 @@ const Sidebar = () => {
         </div>
 
         <div className="mt-6 flex flex-col gap-1">
-          <h2 className="text-lg font-semibold mb-1 text-richblack-50">Pages</h2>
+          <h2 className="text-lg font-semibold mb-1 text-richblack-25">Pages</h2>
           {isLoggedIn && (
             <Link
               to="/profile"
-              className="text-white text-left hover:text-yellow-400 hover:underline py-1 transition"
+              className="text-white text-left hover:text-yellow-400 hover:translate-x-1 py-1 transition-all"
             >
               My Profile
             </Link>
           )}
           <Link
             to="/"
-            className="hover:text-yellow-400 hover:underline transition"
+            className="hover:text-yellow-400 hover:translate-x-1 transition-all"
           >
             Chat App
           </Link>
@@ -63,13 +64,13 @@ const Sidebar = () => {
             <>
               <Link
                 to="/signin"
-                className="hover:text-yellow-400 hover:underline transition"
+                className="hover:text-yellow-400 hover:translate-x-1 transition-all"
               >
                 Sign In
               </Link>
               <Link
                 to="/signup"
-                className="hover:text-yellow-400 hover:underline transition"
+                className="hover:text-yellow-400 hover:translate-x-1 transition-all"
               >
                 Sign Up
               </Link>
@@ -77,7 +78,7 @@ const Sidebar = () => {
           )}
           <Link
             to="/"
-            className="hover:text-yellow-400 hover:underline transition"
+            className="hover:text-yellow-400 hover:translate-x-1 transition-all"
           >
             Home
           </Link>
@@ -92,3 +93,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

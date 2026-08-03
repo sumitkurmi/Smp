@@ -1,20 +1,22 @@
 import GroupLogo from "../assets/group.png";
 const getChatName = (chat, authUserId) => {
-	const chatName =
-		chat?.chatName == "Messenger"
-			? authUserId == chat.users[0]._id
-				? chat.users[1].firstName + " " + chat.users[1].lastName
-				: chat.users[0].firstName + " " + chat.users[0].lastName
-			: chat?.chatName;
+	if (!chat) return "";
+	const chatName = chat?.chatName === "Messenger"
+		? authUserId === chat.users?.[0]?._id
+			? ((chat.users?.[1]?.firstName || "User") + " " + (chat.users?.[1]?.lastName || "")).trim()
+			: ((chat.users?.[0]?.firstName || "User") + " " + (chat.users?.[0]?.lastName || "")).trim()
+		: (chat?.chatName || "Chat");
 	return chatName;
 };
 export const getChatImage = (chat, authUserId) => {
+	if (!chat) return GroupLogo;
 	const ImageLogo =
 		chat?.chatName == "Messenger"
-			? authUserId == chat.users[0]._id
-				? chat.users[1].image
-				: chat.users[0].image
+			? authUserId == chat.users?.[0]?._id
+				? chat.users?.[1]?.image || GroupLogo
+				: chat.users?.[0]?.image || GroupLogo
 			: GroupLogo;
 	return ImageLogo;
 };
 export default getChatName;
+

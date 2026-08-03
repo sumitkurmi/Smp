@@ -29,6 +29,27 @@ const messageSchema = mongoose.Schema(
         name: { type: String }, // original filename
       },
     ],
+    // Reply-to: store the id and a short preview of the quoted message
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
+      default: null,
+    },
+    replyPreview: {
+      type: String,
+      default: "",
+    },
+    // Reactions: emoji -> array of user ids who reacted
+    reactions: {
+      type: Map,
+      of: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: {},
+    },
     chat: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Chat",

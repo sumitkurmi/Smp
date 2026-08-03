@@ -21,6 +21,9 @@ router.get(
   wrapAsync(messageController.clearChat)
 );
 
+// Reaction route (place before dynamic :chatId route patterns if needed)
+router.post("/react", authorization, wrapAsync(messageController.toggleReaction));
+
 // Upload route for any file type
 router.post(
   "/upload",

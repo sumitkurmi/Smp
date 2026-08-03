@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { CiMenuKebab } from "react-icons/ci";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaCalendarCheck } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
 import {
-    setChatDetailsBox,
-    setMessageLoading,
+	setChatDetailsBox,
+	setMessageLoading,
 } from "../../redux/slices/conditionSlice";
 import { addAllMessages } from "../../redux/slices/messageSlice";
 import { addSelectedChat } from "../../redux/slices/myChatSlice";
@@ -18,17 +18,21 @@ import MessageSend from "./MessageSend";
 
 import socket from "../../socket/socket";
 import getChatName, { getChatImage } from "../../utils/getChatName";
+import { canSeePresence, getOtherUser, isUserOnline } from "../../utils/presence";
 
 const MessageBox = ({ chatId }) => {
 	const dispatch = useDispatch();
 	const chatDetailsBox = useRef(null);
 	const [isExiting, setIsExiting] = useState(false);
+	const [replyTo, setReplyTo] = useState(null);
 
 	const isChatDetailsBox = useSelector((state) => state?.condition?.isChatDetailsBox);
 	const isMessageLoading = useSelector((state) => state?.condition?.isMessageLoading);
 	const allMessage = useSelector((state) => state?.message?.message);
 	const selectedChat = useSelector((state) => state?.myChat?.selectedChat);
 	const authUserId = useSelector((state) => state?.auth?._id);
+	const accountType = useSelector((state) => state?.auth?.accountType);
+	const onlineUserIds = useSelector((state) => state?.online?.onlineUserIds || []);
 
 	// Fetch messages on chat change
 	useEffect(() => {
@@ -79,11 +83,15 @@ const MessageBox = ({ chatId }) => {
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, [isChatDetailsBox, dispatch]);
 
-	return (
-		<>
+	const showPresence = canSeePresence(accountType);
+	const otherUser = getOtherUser(selectedChat, authUserId);
+	const isOnline = showPresence && otherUser && isUserOnline(otherUser._id, onlineUserIds);
+
+return (
+		<div className="w-full h-full flex flex-col min-h-0">
 			{/* Header */}
 			<div
-				className="py-6 sm:px-6 px-3 w-full h-[7vh] font-semibold flex justify-between items-center bg-richblack-900 text-richblack-5 border-b border-richblack-700 cursor-pointer"
+				className="shrink-0 py-6 sm:px-6 px-3 w-full h-[7vh] font-semibold flex justify-between items-center bg-richblack-900/80 backdrop-blur-sm text-richblack-5 border-b border-white/10 cursor-pointer"
 				onClick={() => dispatch(setChatDetailsBox(true))}
 			>
 				<div className="flex items-center gap-2">
@@ -99,12 +107,22 @@ const MessageBox = ({ chatId }) => {
 					</div>
 
 					{/* Chat Avatar & Name */}
-					<img
-						src={getChatImage(selectedChat, authUserId)}
-						alt="Chat Avatar"
-						className="h-9 w-9 rounded-full"
-					/>
-					<h1 className="line-clamp-1">{getChatName(selectedChat, authUserId)}</h1>
+					<div className="relative">
+						<img
+							src={getChatImage(selectedChat, authUserId)}
+							alt="Chat Avatar"
+							className="h-9 w-9 rounded-full object-cover"
+						/>
+						{isOnline && <span className="presence-dot" />}
+					</div>
+					<div className="flex flex-col">
+						<h1 className="line-clamp-1 leading-tight">{getChatName(selectedChat, authUserId)}</h1>
+						{showPresence && otherUser && (
+							<span className={`text-[10px] font-light ${isOnline ? "text-green-400" : "text-richblack-400"}`}>
+								{isOnline ? "Online" : "Offline"}
+							</span>
+						)}
+					</div>
 				</div>
 
 				<CiMenuKebab fontSize={18} title="Menu" className="cursor-pointer" />
@@ -126,17 +144,39 @@ const MessageBox = ({ chatId }) => {
 				</div>
 			)}
 
+			{/* Meeting Reminder Banner */}
+			{selectedChat?.isGroupChat && selectedChat?.meetings?.length > 0 && (
+				<div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400/10 via-richblack-800/80 to-transparent border-b border-yellow-400/20 text-yellow-200 text-xs font-medium">
+					<FaCalendarCheck className="text-yellow-400 shrink-0" size={14} />
+					<span className="truncate">
+						{selectedChat.meetings.length} meeting
+						{selectedChat.meetings.length > 1 ? "s" : ""} scheduled — tap the menu for details
+					</span>
+				</div>
+			)}
+
 			{/* Messages */}
 			{isMessageLoading ? (
 				<MessageLoading />
 			) : (
-				<AllMessages allMessage={allMessage} authUserId={authUserId} />
+				<AllMessages
+					allMessage={allMessage}
+					authUserId={authUserId}
+					onReply={(msg) => {
+						setReplyTo(msg);
+					}}
+				/>
 			)}
 
 			{/* Message Input */}
-			<MessageSend chatId={chatId} />
-		</>
+<MessageSend
+				chatId={chatId}
+				replyTo={replyTo}
+				setReplyTo={setReplyTo}
+			/>
+		</div>
 	);
 };
 
 export default MessageBox;
+

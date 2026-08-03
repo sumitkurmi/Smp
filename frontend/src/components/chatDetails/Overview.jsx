@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import getChatName, { getChatImage } from "../../utils/getChatName";
-import { SimpleDateAndTime } from "../../utils/formateDateTime";
+import { useState } from "react";
 import { CiCircleInfo } from "react-icons/ci";
-import { toast } from "react-toastify";
-import { RxUpdate } from "react-icons/rx";
-import { addSelectedChat } from "../../redux/slices/myChatSlice";
-import { setLoading } from "../../redux/slices/conditionSlice";
+import { HiOutlineUsers } from 'react-icons/hi2';
 import { MdMessage } from 'react-icons/md';
+import { RxUpdate } from "react-icons/rx";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { setLoading } from "../../redux/slices/conditionSlice";
+import { addSelectedChat } from "../../redux/slices/myChatSlice";
+import { SimpleDateAndTime } from "../../utils/formateDateTime";
+import getChatName, { getChatImage } from "../../utils/getChatName";
 
 const Overview = () => {
 	const dispatch = useDispatch();
@@ -63,15 +64,18 @@ const Overview = () => {
 	};
 
 	return (
-		<div className="text-white px-6 py-6 flex flex-col gap-6 bg-richblack-900 rounded-lg max-h-[60vh] overflow-auto scroll-style">
+		<div className="text-white px-6 py-6 flex flex-col gap-6 rounded-lg max-h-[60vh] overflow-auto scroll-style">
 			{/* Avatar and Title */}
 			<div className="flex flex-col items-center justify-center gap-4">
-				<img
-					src={getChatImage(selectedChat, authUserId)}
-					alt="chat"
-					className="h-20 w-20 rounded-full object-cover border-4 border-yellow-400"
-				/>
-				<div className="flex items-center gap-2 text-2xl font-bold text-yellow-400">
+				<div className="relative">
+					<div className="absolute inset-0 bg-yellow-400/20 blur-2xl rounded-full" />
+					<img
+						src={getChatImage(selectedChat, authUserId)}
+						alt="chat"
+						className="relative h-20 w-20 rounded-full object-cover border-4 border-yellow-400"
+					/>
+				</div>
+				<div className="flex items-center gap-2 text-2xl font-bold text-gradient-gold">
 					<span>{getChatName(selectedChat, authUserId)}</span>
 					{selectedChat?.isGroupChat && (
 						<CiCircleInfo
@@ -86,7 +90,7 @@ const Overview = () => {
 
 			{/* Rename Group Section */}
 			{changeNameBox && (
-				<div className="space-y-3">
+				<div className="space-y-3 glass-light rounded-xl p-4 modal-enter">
 					<h2 className="text-sm font-medium text-richblack-200">Rename Group Chat:</h2>
 					<div className="flex gap-2">
 						<input
@@ -94,7 +98,7 @@ const Overview = () => {
 							placeholder="Enter group name"
 							value={changeName}
 							onChange={(e) => setChangeName(e.target.value)}
-							className="flex-1 px-4 py-2 rounded-full bg-richblack-700 border border-yellow-400 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+							className="flex-1 px-4 py-2 rounded-full bg-richblack-700/70 border border-yellow-400/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
 						/>
 						<button
 							onClick={handleChangeName}
@@ -108,9 +112,9 @@ const Overview = () => {
 			)}
 
 			{/* Divider */}
-			<div className="border-t border-richblack-600" />
+			<div className="border-t border-white/10" />
 
-			{/* Chat Meta Info: Only Last Message */}
+			{/* Chat Meta Info */}
 			<div className="space-y-4 text-sm overflow-auto scroll-style">
 				<div className="flex items-center gap-2">
 					<MdMessage className="text-yellow-400" title="Last Message" />
@@ -123,9 +127,19 @@ const Overview = () => {
 						)}
 					</div>
 				</div>
+				{selectedChat?.isGroupChat && (
+					<div className="flex items-center gap-2">
+						<HiOutlineUsers className="text-blue-400" title="Members" />
+						<div>
+							<h3 className="text-richblack-300">Members</h3>
+							<p className="text-white/70">{selectedChat?.users?.length || 0} members</p>
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);
 };
 
 export default Overview;
+

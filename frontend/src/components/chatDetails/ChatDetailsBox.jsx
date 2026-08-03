@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CiCircleInfo } from "react-icons/ci";
+import { FaCalendarCheck } from "react-icons/fa";
 import { HiOutlineUsers } from "react-icons/hi2";
 import { IoSettingsOutline } from "react-icons/io5";
 import { useSelector } from "react-redux";
@@ -26,7 +27,7 @@ const ChatDetailsBox = () => {
     },
     {
       label: "Attendance",
-      icon: <IoSettingsOutline fontSize={18} title="Attendance" />,
+      icon: <FaCalendarCheck fontSize={18} title="Attendance" />,
       value: "attendance",
       show: selectedChat?.isGroupChat,
     },
@@ -40,7 +41,7 @@ const ChatDetailsBox = () => {
   return (
     <div className="flex w-full h-[60vh] bg-richblack-800 rounded-lg overflow-hidden shadow-lg">
       {/* Sidebar Tabs */}
-      <nav className="w-28 sm:w-32 md:w-36 lg:w-40 bg-richblack-700 p-4 flex flex-col space-y-2">
+      <nav className="w-28 sm:w-32 md:w-36 lg:w-40 bg-richblack-700/60 p-4 flex flex-col space-y-2 border-r border-white/10">
         {menuItems
           .filter(item => item.show !== false)
           .map(({ label, icon, value }) => (
@@ -49,10 +50,10 @@ const ChatDetailsBox = () => {
               onClick={() => setDetailView(value)}
               title={label}
               aria-label={label}
-              className={`flex items-center gap-2 whitespace-nowrap px-3 py-2 rounded-md transition focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer
+              className={`flex items-center gap-2 whitespace-nowrap px-3 py-2 rounded-xl transition focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer
                 ${detailView === value
-                  ? 'bg-yellow-400 text-black'
-                  : 'text-richblack-200 hover:bg-richblack-600'}
+                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-300 text-black shadow-lg shadow-yellow-500/20'
+                  : 'text-richblack-200 hover:bg-white/5'}
               `}
             >
               <span className="text-lg">{icon}</span>
@@ -62,7 +63,7 @@ const ChatDetailsBox = () => {
       </nav>
 
       {/* View Container */}
-      <div className="flex-1 bg-richblack-900 p-6 overflow-y-auto scroll-style">
+      <div className="flex-1 bg-richblack-900/60 p-6 overflow-y-auto scroll-style">
         {detailView === "overview" && <Overview />}
         {detailView === "members" && <Member />}
         {detailView === "attendance" && <Attendance />}
@@ -73,3 +74,4 @@ const ChatDetailsBox = () => {
 };
 
 export default ChatDetailsBox;
+

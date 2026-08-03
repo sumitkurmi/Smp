@@ -1,25 +1,29 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FaSearch } from "react-icons/fa";
+import { HiUsers } from "react-icons/hi2";
+import { MdOutlineClose } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import {
 	setChatLoading,
 	setGroupChatBox,
 	setGroupChatId,
 	setLoading,
 } from "../../redux/slices/conditionSlice";
-import { MdOutlineClose } from "react-icons/md";
-import { FaSearch } from "react-icons/fa";
-import ChatShimmer from "../loading/ChatShimmer";
-import { handleScrollEnd } from "../../utils/handleScrollTop";
-import { toast } from "react-toastify";
 import { addSelectedChat } from "../../redux/slices/myChatSlice";
-import { SimpleDateAndTime } from "../../utils/formateDateTime";
 import socket from "../../socket/socket";
+import { SimpleDateAndTime } from "../../utils/formateDateTime";
+import { handleScrollEnd } from "../../utils/handleScrollTop";
+import { canSeePresence, isUserOnline } from "../../utils/presence";
+import ChatShimmer from "../loading/ChatShimmer";
 
 const GroupChatBox = () => {
 	const groupUser = useRef("");
 	const dispatch = useDispatch();
 	const isChatLoading = useSelector((store) => store?.condition?.isChatLoading);
 	const authUserId = useSelector((store) => store?.auth?._id);
+	const accountType = useSelector((store) => store?.auth?.accountType);
+	const onlineUserIds = useSelector((store) => store?.online?.onlineUserIds || []);
 
 	const [isGroupName, setGroupName] = useState("");
 	const [users, setUsers] = useState([]);
@@ -122,11 +126,13 @@ const GroupChatBox = () => {
 			});
 	};
 
+	const showPresence = canSeePresence(accountType);
+
 	return (
-		<div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-			<div className="w-full max-w-2xl rounded-lg bg-richblack-800 border border-richblack-600 p-5 shadow-md relative">
-				<h2 className="text-2xl font-bold text-yellow-400 text-center mb-6">
-					Create a Group
+		<div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+			<div className="w-full max-w-2xl rounded-2xl bg-gradient-to-br from-richblack-800 to-richblack-900 border border-white/10 p-6 shadow-2xl relative modal-enter">
+				<h2 className="text-2xl font-bold text-gradient-gold text-center mb-6 flex items-center justify-center gap-2">
+					<HiUsers size={24} /> Create a Group
 				</h2>
 
 				{/* Search and selected users */}
@@ -138,8 +144,8 @@ const GroupChatBox = () => {
 							value={inputUserName}
 							onChange={(e) => setInputUserName(e.target.value)}
 							type="text"
-							placeholder="Search users..."
-							className="w-full bg-richblack-700 border border-richblack-600 text-white pl-10 pr-4 py-2 rounded-md placeholder:text-richblack-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+							placeholder="Search students..."
+							className="w-full bg-richblack-700/70 border border-white/10 text-white pl-10 pr-4 py-2.5 rounded-full placeholder:text-richblack-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 transition"
 						/>
 					</div>
 
@@ -151,52 +157,58 @@ const GroupChatBox = () => {
 						{isGroupUsers.map((user) => (
 							<div
 								key={user._id}
-								className="flex items-center gap-2 px-2 py-1 rounded-md border border-yellow-200 text-yellow-50 bg-richblack-700"
+								className="flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-400/40 text-yellow-100 bg-richblack-700/70"
 							>
 								<span>{user.firstName}</span>
 								<button
 									onClick={() => handleRemoveGroupUser(user._id)}
 									className="text-sm hover:text-pink-300"
 								>
-									<MdOutlineClose size={18} />
+									<MdOutlineClose size={16} />
 								</button>
 							</div>
 						))}
 					</div>
 
 					{/* User list */}
-					<div className="max-h-64 overflow-y-auto scroll-style">
+					<div className="max-h-64 overflow-y-auto scroll-style space-y-2">
 						{isChatLoading ? (
 							<ChatShimmer />
 						) : selectedUsers.length === 0 ? (
 							<div className="text-center text-richblack-300">
-								No users found.
+								No students found.
 							</div>
 						) : (
-							selectedUsers.map((user) => (
-								<button
-									key={user._id}
-									onClick={() => {
-										addGroupUser(user);
-										setInputUserName("");
-									}}
-									className="w-full flex items-center gap-3 p-3 rounded-lg border border-richblack-600 hover:bg-richblack-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-								>
-									<img
-										src={user.image}
-										alt="user"
-										className="h-10 w-10 rounded-full object-cover"
-									/>
-									<div className="flex flex-col text-white">
-										<span className="capitalize">
-											{user.firstName} {user.lastName}
-										</span>
-										<span className="text-xs text-richblack-300">
-											{SimpleDateAndTime(user.createdAt)}
-										</span>
-									</div>
-								</button>
-							))
+							selectedUsers.map((user) => {
+								const online = showPresence && isUserOnline(user._id, onlineUserIds);
+								return (
+									<button
+										key={user._id}
+										onClick={() => {
+											addGroupUser(user);
+											setInputUserName("");
+										}}
+										className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-richblack-700/70 hover:border-white/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 transition"
+									>
+										<div className="relative shrink-0">
+											<img
+												src={user.image}
+												alt="user"
+												className="h-10 w-10 rounded-full object-cover"
+											/>
+											{online && <span className="presence-dot" />}
+										</div>
+										<div className="flex flex-col text-white text-left">
+											<span className="capitalize">
+												{user.firstName} {user.lastName}
+											</span>
+											<span className="text-xs text-richblack-300">
+												{SimpleDateAndTime(user.createdAt)}
+											</span>
+										</div>
+									</button>
+								);
+							})
 						)}
 					</div>
 
@@ -206,11 +218,11 @@ const GroupChatBox = () => {
 							type="text"
 							placeholder="Group Name"
 							onChange={(e) => setGroupName(e.target.value)}
-							className="flex-1 bg-richblack-700 border border-richblack-600 text-white px-4 py-2 rounded-full placeholder:text-richblack-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+							className="flex-1 bg-richblack-700/70 border border-white/10 text-white px-4 py-2.5 rounded-full placeholder:text-richblack-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 transition"
 						/>
 						<button
 							onClick={handleCreateGroupChat}
-							className="bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-6 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+							className="bg-gradient-to-r from-yellow-400 to-yellow-300 hover:from-yellow-300 hover:to-yellow-200 text-black font-semibold px-6 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-400 transition shadow-lg shadow-yellow-500/20"
 						>
 							Create
 						</button>
@@ -230,3 +242,4 @@ const GroupChatBox = () => {
 };
 
 export default GroupChatBox;
+

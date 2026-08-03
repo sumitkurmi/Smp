@@ -1,11 +1,11 @@
-import React from "react";
+import { FaCalendarCheck } from "react-icons/fa";
+import { MdOutlineClose, MdOutlineMail } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
+import { setNotificationBox } from "../redux/slices/conditionSlice";
 import {
   addSelectedChat,
   removeNewMessageRecieved,
 } from "../redux/slices/myChatSlice";
-import { setNotificationBox } from "../redux/slices/conditionSlice";
-import { MdOutlineClose, MdOutlineMail } from "react-icons/md";
 import { SimpleDateAndTime } from "../utils/formateDateTime";
 import getChatName from "../utils/getChatName";
 
@@ -56,16 +56,39 @@ const NotificationBox = () => {
                   dispatch(addSelectedChat(message.chat));
                   dispatch(setNotificationBox(false));
                 }}
-                className="w-full flex items-start gap-3 bg-richblack-700 hover:bg-richblack-600 border border-richblack-600 p-4 rounded-lg transition"
+className="w-full flex items-start gap-3 bg-richblack-700 hover:bg-richblack-600 border border-richblack-600 p-4 rounded-lg transition"
               >
-                <MdOutlineMail size={20} className="text-yellow-400 mt-1" />
+                {message.meeting ? (
+                  <FaCalendarCheck size={20} className="text-yellow-400 mt-1" />
+                ) : (
+                  <MdOutlineMail size={20} className="text-yellow-400 mt-1" />
+                )}
                 <div className="flex-1 text-left">
-                  <p className="text-sm text-richblack-25">
-                    <span className="font-semibold text-yellow-300">New message</span>
-                    {message.chat.isGroupChat && (
-                      <> in <span className="text-cyan-300">{getChatName(message.chat, authUserId)}</span></>
-                    )}{" "}from <span className="font-medium text-yellow-300">{message.sender.firstName}</span>: <span className="text-green-400">{message.message}</span>
-                  </p>
+                  {message.meeting ? (
+                    <>
+                      <p className="text-sm text-richblack-25">
+                        <span className="font-semibold text-yellow-300">📅 New meeting scheduled</span>
+                        {message.chat?.isGroupChat && (
+                          <> in <span className="text-cyan-300">{getChatName(message.chat, authUserId)}</span></>
+                        )}{" "}by <span className="font-medium text-yellow-300">{message.mentorName || message.sender?.firstName}</span>
+                      </p>
+                      <p className="text-sm text-green-400 mt-1">
+                        <span className="font-semibold text-white">{message.meetingTitle}</span>
+                      </p>
+                      {message.scheduledAt && (
+                        <p className="text-xs text-blue-300 mt-1">
+                          🕒 {new Date(message.scheduledAt).toLocaleString()}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-richblack-25">
+                      <span className="font-semibold text-yellow-300">New message</span>
+                      {message.chat.isGroupChat && (
+                        <> in <span className="text-cyan-300">{getChatName(message.chat, authUserId)}</span></>
+                      )}{" "}from <span className="font-medium text-yellow-300">{message.sender.firstName}</span>: <span className="text-green-400">{message.message}</span>
+                    </p>
+                  )}
                   <p className="text-xs text-richblack-400 mt-2 text-right">
                     {SimpleDateAndTime(message.createdAt)}
                   </p>

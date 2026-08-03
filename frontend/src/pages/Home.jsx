@@ -6,16 +6,23 @@ import MyChat from "../components/chatComponents/MyChat";
 import UserSearch from "../components/chatComponents/UserSearch";
 import MessageBox from "../components/messageComponents/MessageBox";
 import {
-    setChatDetailsBox,
-    setSocketConnected
+  setChatDetailsBox,
+  setSocketConnected
 } from "../redux/slices/conditionSlice";
 import { addAllMessages, addNewMessage } from "../redux/slices/messageSlice";
 import {
-    addMyChat,
-    addNewChat,
-    addNewMessageRecieved,
-    deleteSelectedChat,
+  addMeetingNotification,
+  addMyChat,
+  addNewChat,
+  addNewMessageRecieved,
+  deleteSelectedChat,
+  incrementUnread
 } from "../redux/slices/myChatSlice";
+import {
+  addOnlineUser,
+  removeOnlineUser,
+  setOnlineUsers,
+} from "../redux/slices/onlineSlice";
 import socket from "../socket/socket";
 import { receivedSound } from "../utils/notificationSound";
 
@@ -34,7 +41,22 @@ const Home = () => {
     if (!authUserId) return;
     socket.emit("setup", authUserId);
     socket.on("connected", () => dispatch(setSocketConnected(true)));
-  }, [authUserId]);
+
+    // Presence: initial list + live updates
+    const onlineHandler = (userId) => dispatch(addOnlineUser(userId));
+    const offlineHandler = (userId) => dispatch(removeOnlineUser(userId));
+    const onlineListHandler = (userIds) => dispatch(setOnlineUsers(userIds));
+
+    socket.on("user online", onlineHandler);
+    socket.on("user offline", offlineHandler);
+    socket.on("online users", onlineListHandler);
+
+    return () => {
+      socket.off("user online", onlineHandler);
+      socket.off("user offline", offlineHandler);
+      socket.off("online users", onlineListHandler);
+    };
+  }, [authUserId, dispatch]);
 
   // SOCKET MESSAGE RECEIVED
   useEffect(() => {
@@ -49,6 +71,7 @@ const Home = () => {
       } else {
         receivedSound();
         dispatch(addNewMessageRecieved(newMessageReceived));
+        dispatch(incrementUnread(newMessageReceived.chat._id));
       }
 
       if (token) {
@@ -125,17 +148,51 @@ const Home = () => {
     return () => socket.off("attendance updated", attendanceUpdatedHandler);
   }, [dispatch]);
 
+  // SOCKET MEETING SCHEDULED
+  useEffect(() => {
+    const meetingScheduledHandler = (notification) => {
+      // Add to notification box
+      dispatch(addMeetingNotification(notification));
+
+      // Show toast reminder
+      const formattedTime = notification.scheduledAt
+        ? new Date(notification.scheduledAt).toLocaleString()
+        : "";
+      toast.info(
+        `📅 New meeting scheduled${
+          notification.chatName ? ` in ${notification.chatName}` : ""
+        }: ${notification.meetingTitle}${formattedTime ? ` at ${formattedTime}` : ""}`
+      );
+
+      // Refresh chat list to get the meeting icon + meetings data
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/chat`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((json) => {
+            if (json?.data) dispatch(addMyChat(json.data));
+          })
+          .catch(() => {});
+      }
+    };
+
+    socket.on("meeting scheduled", meetingScheduledHandler);
+    return () => socket.off("meeting scheduled", meetingScheduledHandler);
+  }, [dispatch]);
+
   return (
-    <div className="w-full h-[calc(100vh-4rem)] bg-richblack-900 px-2 md:px-6 py-4">
-      <div className="flex w-full h-full border border-richblack-700 rounded-lg overflow-hidden shadow-lg">
+    <div className="w-full h-[calc(100vh-4rem)] px-2 md:px-6 py-4">
+      <div className="flex w-full h-full border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-sm glass">
         {/* Sidebar - Chat list or User search */}
         <div
           className={`${
             selectedChat ? "hidden" : "block"
-          } sm:block sm:w-[35%] w-full h-full bg-richblack-800 relative border-r border-yellow-600`}
+          } sm:block sm:w-[35%] w-full h-full bg-richblack-800/60 relative border-r border-white/10`}
         >
           {/* Content */}
-          <div className="h-full overflow-y-auto custom-scrollbar">
+          <div className="h-full flex flex-col min-h-0 overflow-hidden">
             {isUserSearchBox ? <UserSearch /> : <MyChat />}
           </div>
         </div>
@@ -144,7 +201,7 @@ const Home = () => {
         <div
           className={`${
             !selectedChat ? "hidden" : "block"
-          } sm:block sm:w-[65%] w-full h-full bg-richblack-900 relative`}
+          } sm:block sm:w-[65%] w-full h-full relative flex flex-col min-h-0`}
         >
           {selectedChat ? (
             <MessageBox chatId={selectedChat._id} />
@@ -158,3 +215,4 @@ const Home = () => {
 };
 
 export default Home;
+
