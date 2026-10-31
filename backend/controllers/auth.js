@@ -17,7 +17,7 @@ const registerUser = async (req, res, next) => {
 		return res.status(400).json({ message: `User with this registration number already exists` });
 	}
 
-	password = bcrypt.hashSync(password, 8);
+	password = await bcrypt.hash(password, 8);
 	const userData = new User({
 		firstName,
 		lastName,
@@ -43,7 +43,7 @@ const loginUser = async (req, res) => {
 	if (!user) {
 		return res.status(404).json({ message: `User Not Found` });
 	}
-	const isPasswordValid = bcrypt.compareSync(password, user.password);
+	const isPasswordValid = await bcrypt.compare(password, user.password);
 	if (!isPasswordValid) {
 		return res.status(401).json({ message: "Invalid Password" });
 	}
