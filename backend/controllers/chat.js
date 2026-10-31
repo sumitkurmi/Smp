@@ -6,7 +6,7 @@ const { getIO } = require("../socket");
 const postChat = async (req, res) => {
 	const { userId } = req.body;
 	if (!userId) {
-		return res.status(200).json({ message: "userId not provide" });
+		return res.status(400).json({ message: "userId not provide" });
 	}
 	const existingChat = await Chat.find({
 		isGroupChat: false,
@@ -65,7 +65,7 @@ const createGroup = async (req, res) => {
 		return res.status(403).json({ message: "Only mentors can create groups" });
 	}
 	if (!req.body.users || !req.body.name) {
-		return res.status(200).json({ message: "users and name not provide" });
+		return res.status(400).json({ message: "users and name not provide" });
 	}
 	const users = req.body.users;
 	const studentIds = users
@@ -95,7 +95,7 @@ const deleteGroup = async (req, res) => {
 const renameGroup = async (req, res) => {
 	const { name, chatId } = req.body;
 	if (!name || !chatId) {
-		return res.status(200).json({ message: "name and chatId not provide" });
+		return res.status(400).json({ message: "name and chatId not provide" });
 	}
 	const chat = await Chat.findByIdAndUpdate(
 		chatId,
@@ -114,7 +114,7 @@ const removeFromGroup = async (req, res) => {
 	const { chatId, userId } = req.body;
 	if (!chatId || !userId) {
 		return res
-			.status(200)
+			.status(400)
 			.json({ message: "chatId and userId not provide" });
 	}
 	const chat = await Chat.findByIdAndUpdate(
@@ -134,7 +134,7 @@ const addToGroup = async (req, res) => {
 	const { chatId, userId } = req.body;
 	if (!chatId || !userId) {
 		return res
-			.status(200)
+			.status(400)
 			.json({ message: "chatId and userId not provide" });
 	}
 	const chat = await Chat.findByIdAndUpdate(
